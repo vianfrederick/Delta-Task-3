@@ -3,11 +3,17 @@ var SpotifyWebApi = require('spotify-web-api-node');
 const https = require("https");
 const bodyParser = require("body-parser");
 const app = express();
-app.use(bodyParser.urlencoded({extended: true}));
+
+app.set("view engine", "ejs");
+app.use(bodyParser.urlencoded({
+  extended: true
+}));
+app.use(express.static("public"));
+
 var id_1;
 var id_2;
-var related_1;
-var path =1;
+var related_1 =[];
+var path =1 ;
 var got = true;
 var datas =[];
 var count = 0;
@@ -56,8 +62,8 @@ var datasBig = [];
      redirect_uri : 'http://localhost:8888/callback/'
 });
 
-spotifyApi.setAccessToken('BQDEUseVy9VHzAMS07y9MARZeASDyjLFJMLmBHLRZ2-wc7Y5KWaUXlIP-qxgGYencPoyjC0aVc0dYpQUzSKvMAsJWbyLJGfzK1EosHY34N959S7_3XC8YOPobOxdaBVvbfJiTyVJkrfdgvzAhrzhKbBttPHobHgzaib9QEerKOf3H4AcRQ');
-spotifyApi.setRefreshToken('AQBqLVFeZmwe7tQNhUBHIz-uhzNEMrvdhAYmguuh_aR3RfJ6F3t5YjwkX6HkyRAb-cNNG_ulDhjrPEJiwAplj9ZU7oAwsTyZS87KD6u6c7UcYxggpk1uW315H4Gj8rQE1fY');
+spotifyApi.setAccessToken('BQCTPSGtNDx1Wm99iyCjOZ-OGmhqgF4KxxkP_N34aKRDuHWK0Wdji6FV_ETaO38xEHUFQaIhBbjPUQQ-lRQ6KWler4XjFITatvFt3Z8idSEDA51DfyXH4H3Ip8E3CoUK_ZzgwsgGJO3bQp9cwtm3dR-4FuAMJWak8arMkkB66WyiZQL7KA');
+spotifyApi.setRefreshToken('AQBke_iNs6XMaSUsQqZls393j9uyUv-fEPi1_xilVNgYHUtu9XtckGQhUraC9qRC3bLpQciY9Xo275QemRTewQDvIrQ97cVzcwha22a7CCh0FOeJmjr_0Krp76Npr2RtniE');
 var scopes = scopes = ['user-read-private', 'user-read-email','playlist-modify-public','playlist-modify-private'],
   redirectUri = 'http://localhost:8888/callback/',
   clientId = '62f821e8ba4f49b09f935dee3bd8e5d4',
@@ -82,6 +88,24 @@ console.log(authorizeURL);
 
 app.post("/path",function(req,res){
 
+  function check(related){
+    console.log("entered function");
+    spotifyApi.getArtistRelatedArtists(related)
+      .then(function(data) {
+        console.log("Second successful");
+        var related1 =[];
+         related1 = data.body.artists;
+          related1.forEach(function(dat){
+            datas.push(dat.id);
+          });
+          console.log(datas);
+          }
+        , function(err) {
+        console.log(err);
+      } ) ;
+      return datas;
+  }
+
   var artist_1 = req.body.artist_1;
   var artist_2 = req.body.artist_2;
 
@@ -102,28 +126,33 @@ app.post("/path",function(req,res){
 
     spotifyApi.getArtistRelatedArtists(id_1)
       .then(function(data) {
-        res.send("successful");
+console.log(data.body.artists);
+        console.log("successful");
          related_1 = data.body.artists;
+
 
          for(var i=0;i<related_1.length;i++){
            if(related_1[i].id == id_2){
              console.log("found");
              path = 1;
-             res.send("The shortest path is :" + path);
+             res.render("send",{path : path});
              count = 1;
              related_1 = [];
              break;
            }
          }
          while(count!=1){
+
          if(count!=1){
-           for(var i =0;i<related_1.lenth;i++){
+           for(var i =0;i<related_1.length;i++){
+
              var datas2 = check(related_1[i].id);
+             datas = [];
              for(var j = 0; j < 20; j++){
                if(datas2[j] == id_2){
                  console.log("found");
                  path = path + 1;
-                 res.send("The shortest path is : " + path);
+                 res.render("send",{path : path});
                  count = 1;
                  related_1 = [];
                  break;
@@ -146,20 +175,7 @@ app.post("/path",function(req,res){
         console.log(err);
       });
       console.log(path);
-function check(related){
-  spotifyApi.getArtistRelatedArtists(related)
-    .then(function(data) {
-      // res.send("successful");
-       related1 = data.body.artists;
-        related1.forEach(function(dat){
-          datas.push(dat.id);
-        });
-        }
-      , function(err) {
-      console.log(err);
-    } ) ;
-    return datas;
-}
+
 
 
 
